@@ -37,6 +37,7 @@ public static class HostApplicationBuilderExtensions
                 tracing => tracing
                     .SetSampler(new AlwaysOnSampler()) // https://github.com/open-telemetry/opentelemetry-dotnet/issues/4074
                     .AddSource(ActivityExtensions.ActivitySourceName) // https://github.com/open-telemetry/opentelemetry-dotnet/issues/1918#issuecomment-802294737
+                    .AddConsoleExporter()
                     .AddAspNetCoreInstrumentation(options => options.RecordException = true)
                     .AddEntityFrameworkCoreInstrumentation(options =>
                     {
