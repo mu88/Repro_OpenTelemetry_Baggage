@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry;
 using Web;
+using Web.Processing;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,10 @@ await connection.OpenAsync();
 
 builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddDbContext<BlogsContext>(options => options.UseSqlite(connection));
+builder.Services.AddScoped<IBulkProcessor, BulkProcessor>();
+builder.Services.AddScoped<IProcessor, FirstProcessor>();
+builder.Services.AddScoped<IProcessor, SecondProcessor>();
+builder.Services.AddScoped<IProcessor, ThirdProcessor>();
 builder.ConfigureOpenTelemetry("Web");
 
 WebApplication app = builder.Build();
@@ -42,6 +47,18 @@ app.MapGet("/blogs", async (IBlogService blogService) =>
         activity.SetStatus(ActivityStatusCode.Error, e.ToString());
         throw;
     }
+});
+
+app.MapGet("/bulkProcessing", async (IBulkProcessor bulkProcessor) =>
+{
+    using Activity activity = ActivityExtensions.StartNewChildActivity("Within Web API");
+    await bulkProcessor.ProcessAllAsync(false);
+});
+
+app.MapGet("/bulkProcessing2", async (IBulkProcessor bulkProcessor) =>
+{
+    using Activity activity = ActivityExtensions.StartNewChildActivity("Within Web API v2");
+    await bulkProcessor.ProcessAllAsync(true);
 });
 
 app.Run();
